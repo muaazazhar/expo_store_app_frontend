@@ -31,11 +31,13 @@ export default function AdminProductsScreen() {
 
   const [newName, setNewName] = useState('');
   const [newPrice, setNewPrice] = useState('');
+  const [newDiscountPercent, setNewDiscountPercent] = useState('');
   const [newCategoryId, setNewCategoryId] = useState<string | null>(null);
   const [newImageUri, setNewImageUri] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editPrice, setEditPrice] = useState('');
+  const [editDiscountPercent, setEditDiscountPercent] = useState('');
   const [editCategoryId, setEditCategoryId] = useState<string | null>(null);
   const [editImageUri, setEditImageUri] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -81,10 +83,16 @@ export default function AdminProductsScreen() {
       alert('Product image is required.');
       return;
     }
+    const discountPercent = Number(newDiscountPercent || 0);
+    if (!Number.isFinite(discountPercent) || discountPercent < 0 || discountPercent > 100) {
+      alert('Discount must be between 0 and 100.');
+      return;
+    }
 
     const formData = new FormData();
     formData.append('name', newName.trim());
     formData.append('price', String(price));
+    formData.append('discountPercent', String(discountPercent));
     formData.append('categoryId', newCategoryId);
     formData.append('image', getImagePart(newImageUri) as any);
 
@@ -93,6 +101,7 @@ export default function AdminProductsScreen() {
       await createProduct(formData).unwrap();
       setNewName('');
       setNewPrice('');
+      setNewDiscountPercent('');
       setNewCategoryId(null);
       setNewImageUri(null);
     } finally {
@@ -106,6 +115,7 @@ export default function AdminProductsScreen() {
     setEditingId(productId);
     setEditName(product.name);
     setEditPrice(String(product.price));
+    setEditDiscountPercent(String(product.discountPercent ?? 0));
     setEditCategoryId(product.categoryId ? String(product.categoryId) : null);
     setEditImageUri(null);
   };
@@ -125,10 +135,16 @@ export default function AdminProductsScreen() {
       alert('Category is mandatory for a product.');
       return;
     }
+    const discountPercent = Number(editDiscountPercent || 0);
+    if (!Number.isFinite(discountPercent) || discountPercent < 0 || discountPercent > 100) {
+      alert('Discount must be between 0 and 100.');
+      return;
+    }
 
     const formData = new FormData();
     formData.append('name', editName.trim());
     formData.append('price', String(price));
+    formData.append('discountPercent', String(discountPercent));
     formData.append('categoryId', editCategoryId);
     if (editImageUri) {
       formData.append('image', getImagePart(editImageUri) as any);
@@ -140,6 +156,7 @@ export default function AdminProductsScreen() {
       setEditingId(null);
       setEditName('');
       setEditPrice('');
+      setEditDiscountPercent('');
       setEditCategoryId(null);
       setEditImageUri(null);
     } finally {
@@ -180,6 +197,14 @@ export default function AdminProductsScreen() {
             keyboardType="numeric"
             value={newPrice}
             onChangeText={setNewPrice}
+          />
+          <TextInput
+            style={[styles.input, { borderColor, backgroundColor: inputBackground, color: inputText }]}
+            placeholder="Discount % (optional)"
+            placeholderTextColor={muted}
+            keyboardType="numeric"
+            value={newDiscountPercent}
+            onChangeText={setNewDiscountPercent}
           />
 
           <ThemedText type="defaultSemiBold">Select Category *</ThemedText>
@@ -233,7 +258,10 @@ export default function AdminProductsScreen() {
         {products.map((product) => (
           <ThemedView key={String(product.id)} style={[styles.card, { borderColor, backgroundColor: surface }]}>
             <ThemedText type="defaultSemiBold">{product.name}</ThemedText>
-            <ThemedText>Rs {product.price}</ThemedText>
+            <ThemedText>
+              Rs {product.price}
+              {Number(product.discountPercent ?? 0) > 0 ? `  (${product.discountPercent}% off)` : ''}
+            </ThemedText>
             <ThemedText>Category: {product.category?.name ?? categoryMap.get(String(product.categoryId ?? '')) ?? 'N/A'}</ThemedText>
             {product.imageUrl ? <Image source={{ uri: product.imageUrl }} style={styles.preview} /> : null}
             <Pressable style={[styles.secondaryButton, { borderColor }]} onPress={() => startEdit(String(product.id))} disabled={busy}>
@@ -262,6 +290,14 @@ export default function AdminProductsScreen() {
               keyboardType="numeric"
               value={editPrice}
               onChangeText={setEditPrice}
+            />
+            <TextInput
+              style={[styles.input, { borderColor, backgroundColor: inputBackground, color: inputText }]}
+              placeholder="Discount %"
+              placeholderTextColor={muted}
+              keyboardType="numeric"
+              value={editDiscountPercent}
+              onChangeText={setEditDiscountPercent}
             />
             <ThemedText type="defaultSemiBold">Select Category *</ThemedText>
             {!categoriesFetching && categories.length === 0 ? (

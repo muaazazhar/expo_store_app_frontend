@@ -49,13 +49,24 @@ export default function HomeScreen() {
         {isLoading ? <ActivityIndicator /> : null}
         {products.map((product) => {
           const cartItem = cart.find((item) => item.product.id === product.id);
+          const basePrice = Number(product.price) || 0;
+          const discount = Number(product.discountPercent ?? 0);
+          const discountedPrice =
+            Number.isFinite(discount) && discount > 0
+              ? Math.round(basePrice * (1 - Math.min(discount, 100) / 100))
+              : basePrice;
           return (
             <ThemedView key={String(product.id)} style={[styles.productCard, { borderColor, backgroundColor: surface }]}>
               <View style={styles.productRow}>
                 {product.imageUrl ? <Image source={{ uri: product.imageUrl }} style={styles.productImage} /> : null}
                 <View style={styles.productInfo}>
                   <ThemedText type="defaultSemiBold">{product.name}</ThemedText>
-                  <ThemedText>Rs {product.price}</ThemedText>
+                  <View style={styles.priceRow}>
+                    <ThemedText>Rs {discountedPrice}</ThemedText>
+                    {discount > 0 ? (
+                      <ThemedText style={[styles.strikePrice, { color: muted }]}>Rs {basePrice}</ThemedText>
+                    ) : null}
+                  </View>
                   <ThemedText style={{ color: muted }}>{product.category?.name ?? 'General'}</ThemedText>
                 </View>
               </View>
@@ -142,6 +153,15 @@ const styles = StyleSheet.create({
   productInfo: {
     flex: 1,
     gap: 3,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  strikePrice: {
+    textDecorationLine: 'line-through',
+    fontSize: 13,
   },
   qtyRow: {
     flexDirection: 'row',

@@ -51,7 +51,7 @@ export default function AccountScreen() {
           </Pressable>
         </ThemedView>
 
-        <Pressable style={[styles.menuItem, { borderColor, borderColor: danger }]} onPress={handleLogout}>
+        <Pressable style={[styles.menuItem, { borderColor: danger }]} onPress={handleLogout}>
           <ThemedText style={{ color: danger }}>Logout</ThemedText>
         </Pressable>
       </ScrollView>

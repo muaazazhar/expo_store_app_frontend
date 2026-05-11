@@ -78,12 +78,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const total = useMemo(
     () =>
       cart.reduce(
-        (sum, item) =>
-          sum +
-          (typeof item.product.price === "string"
+        (sum, item) => {
+          const basePrice = typeof item.product.price === "string"
             ? Number(item.product.price)
-            : item.product.price) *
-            item.quantity,
+            : item.product.price;
+          const discount = Number(item.product.discountPercent ?? 0);
+          const effectivePrice =
+            Number.isFinite(discount) && discount > 0
+              ? basePrice * (1 - Math.min(discount, 100) / 100)
+              : basePrice;
+          return sum + effectivePrice * item.quantity;
+        },
         0,
       ),
     [cart],

@@ -12,14 +12,14 @@ export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     register: builder.mutation<RegisterResponse, { email: string; username: string; password: string }>({
       query: (body) => ({
-        url: '/auth/register',
+        url: '/api/auth/register',
         method: 'POST',
         body,
       }),
     }),
     login: builder.mutation<LoginResponse, { identifier: string; password: string }>({
       query: (body) => ({
-        url: '/auth/login',
+        url: '/api/auth/login',
         method: 'POST',
         body,
       }),
@@ -29,7 +29,7 @@ export const authApi = baseApi.injectEndpoints({
       { code: string } | { id_token: string }
     >({
       query: (body) => ({
-        url: '/auth/google/exchange',
+        url: '/api/auth/google/exchange',
         method: 'POST',
         body,
       }),

@@ -22,6 +22,7 @@ export type Product = {
   id: string | number;
   name: string;
   price: number | string;
+  discountPercent?: number | null;
   categoryId?: string | null;
   category?: Category | null;
   imageUrl?: string | null;
@@ -34,7 +35,7 @@ export type OrderItem = {
   quantity: number;
 };
 
-export type PaymentMethod = 'card' | 'cod' | 'bank_transfer' | 'wallet';
+export type PaymentMethod = 'credit_debit_card' | 'cash_on_delivery' | 'bank_transfer' | 'wallet';
 export type WalletProvider = 'easypaisa' | 'jazzcash';
 
 export type Order = {

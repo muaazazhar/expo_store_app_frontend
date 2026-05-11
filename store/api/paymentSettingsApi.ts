@@ -4,16 +4,16 @@ import type { PaymentSettings } from '@/types/domain';
 export const paymentSettingsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getPublicPaymentSettings: builder.query<PaymentSettings | null, void>({
-      query: () => '/payment-settings/public',
+      query: () => '/api/payment-settings/public',
       providesTags: [{ type: 'PaymentSettings', id: 'SINGLE' }],
     }),
     getAdminPaymentSettings: builder.query<PaymentSettings | null, void>({
-      query: () => '/payment-settings',
+      query: () => '/api/payment-settings',
       providesTags: [{ type: 'PaymentSettings', id: 'SINGLE' }],
     }),
     upsertPaymentSettings: builder.mutation<PaymentSettings, PaymentSettings>({
       query: (body) => ({
-        url: '/payment-settings',
+        url: '/api/payment-settings',
         method: 'PUT',
         body,
       }),

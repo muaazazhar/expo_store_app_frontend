@@ -40,6 +40,7 @@ function RootNavigator() {
         <Stack.Screen name="admin-categories" options={{ headerShown: false }} />
         <Stack.Screen name="admin-orders" options={{ headerShown: false }} />
         <Stack.Screen name="admin-payment" options={{ headerShown: false }} />
+        <Stack.Screen name="checkout" options={{ headerShown: false }} />
         <Stack.Screen name="receipt" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>

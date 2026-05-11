@@ -33,21 +33,21 @@ export const ordersApi = baseApi.injectEndpoints({
       paymentReference?: string;
     }>({
       query: (body) => ({
-        url: '/orders',
+        url: '/api/orders',
         method: 'POST',
         body,
       }),
       invalidatesTags: [{ type: 'Order', id: 'LIST' }],
     }),
     getMyOrders: builder.query<Order[], void>({
-      query: () => '/orders/my',
+      query: () => '/api/orders/my',
       providesTags: (result) =>
         result
           ? [{ type: 'Order', id: 'LIST' }, ...result.map((order) => ({ type: 'Order' as const, id: String(order.id) }))]
           : [{ type: 'Order', id: 'LIST' }],
     }),
     getAllOrders: builder.query<Order[], void>({
-      query: () => '/orders',
+      query: () => '/api/orders',
       providesTags: (result) =>
         result
           ? [{ type: 'Order', id: 'LIST' }, ...result.map((order) => ({ type: 'Order' as const, id: String(order.id) }))]
@@ -55,7 +55,7 @@ export const ordersApi = baseApi.injectEndpoints({
     }),
     updateOrderStatus: builder.mutation<Order, { id: string; status: 'pending' | 'processing' | 'fulfilled' | 'cancelled' }>({
       query: ({ id, status }) => ({
-        url: `/orders/${id}`,
+        url: `/api/orders/${id}`,
         method: 'PATCH',
         body: { status },
       }),
@@ -66,7 +66,7 @@ export const ordersApi = baseApi.injectEndpoints({
       ],
     }),
     getReceipt: builder.query<Receipt, { id: string }>({
-      query: ({ id }) => `/orders/${id}/receipt`,
+      query: ({ id }) => `/api/orders/${id}/receipt`,
       providesTags: (_result, _error, arg) => [{ type: 'Receipt', id: arg.id }],
     }),
   }),

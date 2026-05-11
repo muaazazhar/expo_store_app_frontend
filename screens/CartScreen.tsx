@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, TextInput } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ScreenHeader } from "@/components/screen-header";
@@ -9,524 +8,254 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useCart } from "@/context/CartContext";
 import { useThemeColor } from "@/hooks/use-theme-color";
-import { usePlaceOrderMutation } from "@/store/api/ordersApi";
-import { useGetPublicPaymentSettingsQuery } from "@/store/api/paymentSettingsApi";
-import type { PaymentMethod, WalletProvider } from "@/types/domain";
 
 export default function CartScreen() {
-  const {
-    cart,
-    total,
-    clearCart,
-    removeFromCart,
-    increaseQuantity,
-    decreaseQuantity,
-  } = useCart();
-  const [placeOrder] = usePlaceOrderMutation();
-  const [address, setAddress] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [locating, setLocating] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
-  const [walletProvider, setWalletProvider] = useState<WalletProvider>("easypaisa");
-  const [paymentReference, setPaymentReference] = useState("");
-  const [error, setError] = useState("");
-  const { data: paymentSettings } = useGetPublicPaymentSettingsQuery();
+  const { cart, total, clearCart, removeFromCart, increaseQuantity, decreaseQuantity } = useCart();
+
   const borderColor = useThemeColor({}, "border");
   const surface = useThemeColor({}, "surface");
-  const inputBackground = useThemeColor({}, "inputBackground");
-  const inputText = useThemeColor({}, "inputText");
   const primary = useThemeColor({}, "primary");
   const primaryText = useThemeColor({}, "primaryText");
   const danger = useThemeColor({}, "danger");
   const muted = useThemeColor({}, "muted");
-  const hasBankTransferDetails = Boolean(
-    paymentSettings?.bankName &&
-      paymentSettings?.accountTitle &&
-      paymentSettings?.accountNumber &&
-      paymentSettings?.iban,
-  );
-  const hasWalletDetails = Boolean(
-    paymentSettings?.easypaisaNumber || paymentSettings?.jazzcashNumber,
-  );
-  const paymentAvailability = useMemo(
-    () => ({
-      card: false,
-      cod: true,
-      bank_transfer: hasBankTransferDetails,
-      wallet: hasWalletDetails,
-    }),
-    [hasBankTransferDetails, hasWalletDetails],
-  );
+  const surfaceAlt = useThemeColor({}, "surfaceAlt");
 
-  useEffect(() => {
-    if (!paymentAvailability[paymentMethod]) {
-      setPaymentMethod("cod");
-    }
-  }, [paymentAvailability, paymentMethod]);
-
-  const handleUseCurrentLocation = async () => {
-    setError("");
-    setLocating(true);
-    try {
-      const geolocation = globalThis.navigator?.geolocation;
-      if (!geolocation) {
-        setError("Location service is unavailable on this build.");
-        return;
-      }
-
-      const position = (await new Promise((resolve, reject) => {
-        geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 12000,
-          maximumAge: 10000,
-        });
-      })) as { coords: { latitude: number; longitude: number } };
-
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
-      );
-      if (!response.ok) {
-        throw new Error("Reverse geocode failed");
-      }
-      const data = (await response.json()) as { display_name?: string };
-      if (!data.display_name) {
-        setError("Could not resolve address for current location.");
-        return;
-      }
-      setAddress(data.display_name);
-    } catch {
-      setError("Could not fetch current location and address.");
-    } finally {
-      setLocating(false);
-    }
-  };
-
-  const handlePlaceOrder = async () => {
-    if (!address.trim()) {
-      setError("Please add a delivery address.");
-      return;
-    }
-    if (!paymentAvailability[paymentMethod]) {
-      setError("Selected payment method is currently unavailable.");
-      return;
-    }
-
-    setError("");
-    setLoading(true);
-    try {
-      const orderItems = Object.values(
-        cart.reduce<Record<string, { productId: number; quantity: number }>>(
-          (acc, item) => {
-            const key = String(item.id);
-            const productId = Number(item.id);
-            if (Number.isNaN(productId)) {
-              return acc;
-            }
-            if (!acc[key]) {
-              acc[key] = { productId, quantity: 0 };
-            }
-            acc[key].quantity += 1;
-            return acc;
-          },
-          {},
-        ),
-      );
-
-      const order = await placeOrder({
-        address,
-        items: orderItems,
-        paymentMethod,
-        walletProvider: paymentMethod === "wallet" ? walletProvider : undefined,
-        paymentReference: paymentReference.trim() || undefined,
-      }).unwrap();
-      clearCart();
-      router.push({
-        pathname: "/receipt",
-        params: { orderId: String(order.id) },
-      });
-    } catch {
-      setError("Could not place order. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const estimatedOriginalTotal = Math.round(total * 1.08);
+  const savings = Math.max(0, estimatedOriginalTotal - total);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-      <ScrollView
-        contentContainerStyle={styles.page}
-        showsVerticalScrollIndicator={false}
-      >
-        <ThemedView style={styles.container}>
+      <View style={styles.root}>
+        <ScrollView contentContainerStyle={styles.page} showsVerticalScrollIndicator={false}>
           <ScreenHeader title="Cart" />
-          <ThemedText style={[styles.helperText, { color: muted }]}>
-            Review items, add delivery address, then place your order.
-          </ThemedText>
+
+          <View style={styles.headerRow}>
+            <ThemedText type="title" style={styles.cartTitle}>Cart</ThemedText>
+            <Pressable onPress={clearCart} disabled={cart.length === 0}>
+              <ThemedText style={{ color: cart.length === 0 ? muted : danger }}>Clear cart</ThemedText>
+            </Pressable>
+          </View>
 
           {cart.length === 0 ? (
-            <ThemedText>Your cart is empty.</ThemedText>
+            <ThemedView style={[styles.emptyCard, { borderColor, backgroundColor: surface }]}>
+              <ThemedText>Your cart is empty.</ThemedText>
+            </ThemedView>
           ) : (
-            cart.map((item, idx) => (
-              <ThemedView
-                key={`${item.product.id}-${idx}`}
-                style={[
-                  styles.itemRow,
-                  { borderColor, backgroundColor: surface },
-                ]}
-              >
-                <ThemedView style={styles.itemInfo}>
-                  <ThemedText>{item.product.name}</ThemedText>
-                  <ThemedText>Rs {item.product.price}</ThemedText>
-                  <ThemedView
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 8,
-                      marginTop: 4,
-                    }}
-                  >
-                    {item.quantity > 1 ? (
-                      <>
-                        <Pressable
-                          style={[styles.removeButton, { borderColor }]}
-                          onPress={() => decreaseQuantity(item.product.id)}
-                        >
-                          <ThemedText
-                            style={[styles.removeButtonText, { color: danger }]}
-                          >
-                            -
-                          </ThemedText>
-                        </Pressable>
-                        <ThemedText>{item.quantity}</ThemedText>
-                        <Pressable
-                          style={[styles.removeButton, { borderColor }]}
-                          onPress={() => increaseQuantity(item.product.id)}
-                        >
-                          <ThemedText
-                            style={[
-                              styles.removeButtonText,
-                              { color: primary },
-                            ]}
-                          >
-                            +
-                          </ThemedText>
-                        </Pressable>
-                      </>
-                    ) : (
-                      <>
-                        <Pressable
-                          style={[styles.removeButton, { borderColor: danger }]}
-                          onPress={() => removeFromCart(item.product.id)}
-                        >
-                          <Ionicons
-                            name="trash-outline"
-                            size={20}
-                            color={danger}
-                          />
-                        </Pressable>
-                      </>
-                    )}
-                  </ThemedView>
+            cart.map((item, idx) => {
+              const price = Number(item.product.price) || 0;
+              const discount = Number(item.product.discountPercent ?? 0);
+              const discounted = Number.isFinite(discount) && discount > 0
+                ? price * (1 - Math.min(discount, 100) / 100)
+                : price;
+              const lineTotal = Math.round(discounted * item.quantity);
+              const original = Math.round(price * item.quantity);
+              return (
+                <ThemedView
+                  key={`${item.product.id}-${idx}`}
+                  style={[styles.itemRow, { borderColor, backgroundColor: surface }]}>
+                  <Image
+                    source={item.product.imageUrl ? { uri: item.product.imageUrl } : require("@/assets/images/icon.png")}
+                    style={styles.itemImage}
+                  />
+                  <View style={styles.itemInfo}>
+                    <ThemedText numberOfLines={1} style={styles.itemName}>{item.product.name}</ThemedText>
+                    <View style={styles.priceRow}>
+                      <ThemedText type="defaultSemiBold">Rs. {lineTotal.toLocaleString()}</ThemedText>
+                      {discount > 0 ? (
+                        <ThemedText style={[styles.strikePrice, { color: muted }]}>Rs. {original.toLocaleString()}</ThemedText>
+                      ) : null}
+                    </View>
+                  </View>
+                  <View style={[styles.qtyBox, { borderColor }]}>
+                    <Pressable onPress={() => decreaseQuantity(item.product.id)} style={styles.qtyButton}>
+                      <ThemedText style={styles.qtySign}>-</ThemedText>
+                    </Pressable>
+                    <ThemedText style={styles.qtyValue}>{item.quantity}</ThemedText>
+                    <Pressable onPress={() => increaseQuantity(item.product.id)} style={styles.qtyButton}>
+                      <ThemedText style={styles.qtySign}>+</ThemedText>
+                    </Pressable>
+                  </View>
+                  {item.quantity <= 1 ? (
+                    <Pressable
+                      style={[styles.deleteIconWrap, { borderColor }]}
+                      onPress={() => removeFromCart(item.product.id)}>
+                      <Ionicons name="trash-outline" size={16} color={danger} />
+                    </Pressable>
+                  ) : null}
                 </ThemedView>
-              </ThemedView>
-            ))
+              );
+            })
           )}
 
-          <ThemedText type="subtitle">Total: Rs {total}</ThemedText>
-          <ThemedText style={styles.label}>Payment Method</ThemedText>
-          <ThemedView style={styles.paymentMethodRow}>
-            <Pressable
-              style={[
-                styles.methodChip,
-                { borderColor },
-                !paymentAvailability.card && styles.methodChipDisabled,
-                paymentMethod === "card" && { backgroundColor: primary, borderColor: primary },
-              ]}
-              onPress={() => setPaymentMethod("card")}
-              disabled={!paymentAvailability.card}
-            >
-              <ThemedText
-                style={
-                  !paymentAvailability.card
-                    ? { color: muted }
-                    : paymentMethod === "card"
-                      ? { color: primaryText }
-                      : undefined
-                }>
-                Credit / Debit Card (Soon)
-              </ThemedText>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.methodChip,
-                { borderColor },
-                paymentMethod === "cod" && { backgroundColor: primary, borderColor: primary },
-              ]}
-              onPress={() => setPaymentMethod("cod")}
-            >
-              <ThemedText style={paymentMethod === "cod" ? { color: primaryText } : undefined}>Cash on Delivery</ThemedText>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.methodChip,
-                { borderColor },
-                !paymentAvailability.bank_transfer && styles.methodChipDisabled,
-                paymentMethod === "bank_transfer" && { backgroundColor: primary, borderColor: primary },
-              ]}
-              onPress={() => setPaymentMethod("bank_transfer")}
-              disabled={!paymentAvailability.bank_transfer}
-            >
-              <ThemedText
-                style={
-                  !paymentAvailability.bank_transfer
-                    ? { color: muted }
-                    : paymentMethod === "bank_transfer"
-                      ? { color: primaryText }
-                      : undefined
-                }>
-                Bank Transfer
-              </ThemedText>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.methodChip,
-                { borderColor },
-                !paymentAvailability.wallet && styles.methodChipDisabled,
-                paymentMethod === "wallet" && { backgroundColor: primary, borderColor: primary },
-              ]}
-              onPress={() => setPaymentMethod("wallet")}
-              disabled={!paymentAvailability.wallet}
-            >
-              <ThemedText
-                style={
-                  !paymentAvailability.wallet
-                    ? { color: muted }
-                    : paymentMethod === "wallet"
-                      ? { color: primaryText }
-                      : undefined
-                }>
-                Easypaisa / JazzCash
-              </ThemedText>
-            </Pressable>
-          </ThemedView>
-          {!paymentAvailability.bank_transfer || !paymentAvailability.wallet ? (
-            <ThemedText style={[styles.helperText, { color: muted }]}>
-              Bank transfer and wallet require configured admin payment details.
-            </ThemedText>
-          ) : null}
-
-          {paymentMethod === "wallet" ? (
+          {cart.length > 0 ? (
             <>
-              <ThemedText style={styles.label}>Wallet Provider</ThemedText>
-              <ThemedView style={styles.paymentMethodRow}>
-                <Pressable
-                  style={[
-                    styles.methodChip,
-                    { borderColor },
-                    walletProvider === "easypaisa" && { backgroundColor: primary, borderColor: primary },
-                  ]}
-                  onPress={() => setWalletProvider("easypaisa")}
-                >
-                  <ThemedText style={walletProvider === "easypaisa" ? { color: primaryText } : undefined}>Easypaisa</ThemedText>
-                </Pressable>
-                <Pressable
-                  style={[
-                    styles.methodChip,
-                    { borderColor },
-                    walletProvider === "jazzcash" && { backgroundColor: primary, borderColor: primary },
-                  ]}
-                  onPress={() => setWalletProvider("jazzcash")}
-                >
-                  <ThemedText style={walletProvider === "jazzcash" ? { color: primaryText } : undefined}>JazzCash</ThemedText>
-                </Pressable>
-              </ThemedView>
+              <View style={[styles.savingsStrip, { backgroundColor: surfaceAlt }]}>
+                <ThemedText style={[styles.savingsText, { color: primary }]}>
+                  YOU&apos;RE SAVING RS. {savings.toLocaleString()}
+                </ThemedText>
+                <ThemedText style={{ color: primary }}>Add more items</ThemedText>
+              </View>
+              <View style={[styles.deliveryStrip, { backgroundColor: surfaceAlt }]}>
+                <ThemedText>Congratulations! Enjoy free delivery on this order</ThemedText>
+              </View>
             </>
           ) : null}
+        </ScrollView>
 
-          {paymentMethod === "bank_transfer" && paymentSettings ? (
-            <ThemedView style={[styles.infoCard, { borderColor, backgroundColor: surface }]}>
-              <ThemedText type="defaultSemiBold">Bank Account Details</ThemedText>
-              <ThemedText>Bank: {paymentSettings.bankName}</ThemedText>
-              <ThemedText>Title: {paymentSettings.accountTitle}</ThemedText>
-              <ThemedText>Account: {paymentSettings.accountNumber}</ThemedText>
-              {paymentSettings.iban ? <ThemedText>IBAN: {paymentSettings.iban}</ThemedText> : null}
-              {paymentSettings.instructions ? <ThemedText style={{ color: muted }}>{paymentSettings.instructions}</ThemedText> : null}
-            </ThemedView>
-          ) : null}
-
-          {paymentMethod === "wallet" && paymentSettings ? (
-            <ThemedView style={[styles.infoCard, { borderColor, backgroundColor: surface }]}>
-              <ThemedText type="defaultSemiBold">Wallet Account Details</ThemedText>
-              {paymentSettings.easypaisaNumber ? <ThemedText>Easypaisa: {paymentSettings.easypaisaNumber}</ThemedText> : null}
-              {paymentSettings.jazzcashNumber ? <ThemedText>JazzCash: {paymentSettings.jazzcashNumber}</ThemedText> : null}
-            </ThemedView>
-          ) : null}
-
-          {(paymentMethod === "bank_transfer" || paymentMethod === "wallet") ? (
-            <>
-              <ThemedText style={styles.label}>Payment Reference (optional)</ThemedText>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    borderColor,
-                    backgroundColor: inputBackground,
-                    color: inputText,
-                  },
-                ]}
-                placeholder="Transaction id / screenshot reference"
-                placeholderTextColor={muted}
-                value={paymentReference}
-                onChangeText={setPaymentReference}
-              />
-            </>
-          ) : null}
-
-          {paymentMethod === "card" ? (
-            <ThemedText style={[styles.helperText, { color: muted }]}>
-              Card checkout API can be plugged into this flow once provider keys are configured.
-            </ThemedText>
-          ) : null}
-
-          <ThemedText style={styles.label}>Delivery Address</ThemedText>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                borderColor,
-                backgroundColor: inputBackground,
-                color: inputText,
-              },
-            ]}
-            placeholder="Enter full delivery address"
-            placeholderTextColor={muted}
-            multiline
-            numberOfLines={3}
-            value={address}
-            onChangeText={setAddress}
-          />
+        <View style={[styles.footer, { borderTopColor: borderColor, backgroundColor: surface }]}>
+          <View style={styles.totalRow}>
+            <ThemedText style={styles.totalLabel}>Total amount</ThemedText>
+            <ThemedText type="defaultSemiBold" style={styles.totalValue}>Rs. {total.toLocaleString()}</ThemedText>
+          </View>
           <Pressable
             style={[
-              styles.secondaryButton,
-              { borderColor },
-              (locating || loading) && styles.buttonDisabled,
-            ]}
-            onPress={handleUseCurrentLocation}
-            disabled={locating || loading}
-          >
-            <ThemedText>
-              {locating ? "Fetching location..." : "Use current location"}
-            </ThemedText>
-          </Pressable>
-          {!!error && (
-            <ThemedText style={[styles.error, { color: danger }]}>
-              {error}
-            </ThemedText>
-          )}
-
-          <Pressable
-            style={[
-              styles.button,
+              styles.checkoutButton,
               { backgroundColor: primary },
-              (loading || cart.length === 0) && styles.buttonDisabled,
+              cart.length === 0 && styles.buttonDisabled,
             ]}
-            onPress={handlePlaceOrder}
-            disabled={loading || cart.length === 0}
-          >
-            <ThemedText style={[styles.buttonText, { color: primaryText }]}>
-              {loading ? "Placing Order..." : "Place Order"}
+            onPress={() => router.push("/checkout")}
+            disabled={cart.length === 0}>
+            <ThemedText style={[styles.checkoutText, { color: primaryText }]}>
+              Checkout
             </ThemedText>
           </Pressable>
-        </ThemedView>
-      </ScrollView>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
+  safeArea: { flex: 1 },
+  root: { flex: 1 },
   page: {
-    flexGrow: 1,
     padding: 16,
+    paddingBottom: 180,
+    gap: 10,
   },
-  container: {
-    width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
-    gap: 12,
-  },
-  itemRow: {
+  headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  cartTitle: {
+    fontSize: 40,
+    lineHeight: 40,
+  },
+  emptyCard: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+  },
+  itemRow: {
+    borderWidth: 1,
+    borderRadius: 12,
     padding: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  itemImage: {
+    width: 42,
+    height: 42,
+    borderRadius: 8,
   },
   itemInfo: {
+    flex: 1,
     gap: 4,
   },
-  input: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
+  itemName: {
+    fontSize: 16,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  paymentMethodRow: {
+  priceRow: {
     flexDirection: "row",
-    gap: 8,
-    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
   },
-  methodChip: {
+  strikePrice: {
+    textDecorationLine: "line-through",
+    fontSize: 14,
+  },
+  qtyBox: {
     borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderRadius: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 4,
+    height: 34,
   },
-  methodChipDisabled: {
-    opacity: 0.45,
+  qtyButton: {
+    width: 26,
+    height: 26,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  infoCard: {
+  qtySign: {
+    fontSize: 20,
+    lineHeight: 20,
+  },
+  qtyValue: {
+    width: 22,
+    textAlign: "center",
+  },
+  deleteIconWrap: {
     borderWidth: 1,
     borderRadius: 10,
-    padding: 10,
-    gap: 4,
-  },
-  helperText: {
-    // color set from theme token
-  },
-  button: {
-    borderRadius: 8,
-    padding: 12,
+    width: 24,
+    height: 24,
     alignItems: "center",
+    justifyContent: "center",
   },
-  buttonText: {
+  savingsStrip: {
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  savingsText: {
     fontWeight: "700",
   },
-  error: {
-    // color set from theme token
-  },
-  removeButton: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  secondaryButton: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
+  deliveryStrip: {
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     alignItems: "center",
   },
-  removeButtonText: {
+  footer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopWidth: 1,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 18,
+    gap: 10,
+  },
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  totalLabel: {
+    fontSize: 30,
+    lineHeight: 32,
+  },
+  totalValue: {
+    fontSize: 32,
+    lineHeight: 34,
+  },
+  checkoutButton: {
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  checkoutText: {
+    fontSize: 22,
     fontWeight: "700",
+    letterSpacing: 0.3,
   },
   buttonDisabled: {
     opacity: 0.6,
