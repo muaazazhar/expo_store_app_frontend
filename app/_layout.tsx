@@ -6,6 +6,7 @@ import {
 } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { Platform } from "react-native";
 import "react-native-reanimated";
 import { Provider } from "react-redux";
 
@@ -81,7 +82,14 @@ function RootNavigator() {
 
   return (
     <ThemeProvider value={resolvedTheme === "dark" ? NovaDarkTheme : NovaLightTheme}>
-      <Stack>
+      <Stack
+        screenOptions={{
+          // Web: fill viewport so nested tab scenes can size correctly.
+          ...(Platform.OS === "web"
+            ? { contentStyle: { flex: 1, height: "100%" } }
+            : null),
+        }}
+      >
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="verify-email" options={{ headerShown: false }} />

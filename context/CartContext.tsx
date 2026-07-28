@@ -1,6 +1,8 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -8,6 +10,8 @@ import {
 
 import type { Product } from "@/types/domain";
 import { getProductDiscountedPrice } from "@/utils/cartPricing";
+
+const CART_STORAGE_KEY = "novastore_cart";
 
 type CartItem = {
   product: Product;
@@ -27,8 +31,55 @@ type CartContextType = {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+function parseStoredCart(raw: string | null): CartItem[] {
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item): item is CartItem => {
+      if (!item || typeof item !== "object") return false;
+      const candidate = item as Partial<CartItem>;
+      return (
+        !!candidate.product &&
+        typeof candidate.product === "object" &&
+        candidate.product.id != null &&
+        typeof candidate.quantity === "number" &&
+        candidate.quantity > 0
+      );
+    });
+  } catch {
+    return [];
+  }
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    const loadCart = async () => {
+      try {
+        const saved = await AsyncStorage.getItem(CART_STORAGE_KEY);
+        setCart(parseStoredCart(saved));
+      } catch {
+        // Ignore storage issues and start with an empty cart.
+      } finally {
+        setHydrated(true);
+      }
+    };
+    void loadCart();
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    void (async () => {
+      try {
+        await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+      } catch {
+        // Ignore storage issues and keep the in-memory cart.
+      }
+    })();
+  }, [cart, hydrated]);
 
   const addToCart = (product: Product) => {
     setCart((prev) => {
