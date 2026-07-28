@@ -1,71 +1,69 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * App theme colors — mapped from Novalith Labs palette.
+ * Prefer `palette` from `@/brand` when adding new colors.
  */
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#6ad5ff';
+import { palette } from '@/brand';
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#f4f7fb',
-    surface: '#ffffff',
-    surfaceAlt: '#eef3fb',
-    border: '#cbd5e1',
-    primary: '#0a7ea4',
-    primaryText: '#ffffff',
-    muted: '#64748b',
-    danger: '#dc2626',
-    inputBackground: '#ffffff',
-    inputText: '#000000',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    text: palette.textPrimary,
+    background: palette.background,
+    surface: palette.surface,
+    surfaceAlt: palette.borderSubtle,
+    border: palette.border,
+    primary: palette.primary,
+    primaryText: palette.textInverse,
+    muted: palette.textSecondary,
+    danger: palette.danger,
+    inputBackground: palette.surface,
+    inputText: palette.textPrimary,
+    tint: palette.primary,
+    icon: palette.textSecondary,
+    tabIconDefault: palette.textSecondary,
+    tabIconSelected: palette.primary,
   },
   dark: {
-    text: '#e2e8f0',
-    background: '#0b1220',
-    surface: '#121a2b',
-    surfaceAlt: '#1a253b',
-    border: '#334155',
-    primary: '#6ad5ff',
-    primaryText: '#082032',
-    muted: '#94a3b8',
-    danger: '#f87171',
-    inputBackground: '#1a253b',
-    inputText: '#e2e8f0',
-    tint: tintColorDark,
-    icon: '#94a3b8',
-    tabIconDefault: '#94a3b8',
-    tabIconSelected: tintColorDark,
+    text: palette.textPrimaryDark,
+    background: palette.backgroundDark,
+    surface: palette.surfaceDark,
+    surfaceAlt: palette.borderSubtleDark,
+    border: palette.borderDark,
+    primary: palette.primaryOnDark,
+    primaryText: palette.backgroundDark,
+    muted: palette.textSecondaryDark,
+    danger: '#F87171',
+    inputBackground: palette.borderSubtleDark,
+    inputText: palette.textPrimaryDark,
+    tint: palette.primaryOnDark,
+    icon: palette.textSecondaryDark,
+    tabIconDefault: palette.textSecondaryDark,
+    tabIconSelected: palette.primaryOnDark,
   },
 };
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
+    heading: 'system-ui',
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {
     sans: 'normal',
+    heading: 'normal',
     serif: 'serif',
     rounded: 'normal',
     mono: 'monospace',
   },
   web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    sans: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    heading: "Manrope, Inter, system-ui, sans-serif",
     serif: "Georgia, 'Times New Roman', serif",
     rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+    mono: "JetBrains Mono, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
   },
 });

@@ -2,12 +2,14 @@ import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
+  type Theme,
 } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 import { Provider } from "react-redux";
 
+import { palette } from "@/brand";
 import { AuthBootstrap } from "@/components/auth-bootstrap";
 import { AuthRouteTracker } from "@/components/auth-route-tracker";
 import { CustomerScreenOverlays } from "@/components/customer-screen-overlays";
@@ -25,6 +27,32 @@ import { store } from "@/store";
 
 export const unstable_settings = {
   anchor: "(tabs)",
+};
+
+const NovaLightTheme: Theme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: palette.primary,
+    background: palette.background,
+    card: palette.surface,
+    text: palette.textPrimary,
+    border: palette.border,
+    notification: palette.primary,
+  },
+};
+
+const NovaDarkTheme: Theme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    primary: palette.primaryOnDark,
+    background: palette.backgroundDark,
+    card: palette.surfaceDark,
+    text: palette.textPrimaryDark,
+    border: palette.borderDark,
+    notification: palette.primaryOnDark,
+  },
 };
 
 export default function RootLayout() {
@@ -52,7 +80,7 @@ function RootNavigator() {
   const { resolvedTheme } = useThemePreference();
 
   return (
-    <ThemeProvider value={resolvedTheme === "dark" ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={resolvedTheme === "dark" ? NovaDarkTheme : NovaLightTheme}>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />

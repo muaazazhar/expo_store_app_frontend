@@ -3,6 +3,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
+import { APP, BrandLogo } from '@/brand';
 import { ApiErrorBanner } from '@/components/api-feedback';
 import { CategoryRowSkeleton, ProductListSkeleton } from '@/components/catalog-skeletons';
 import { CatalogProductCard } from '@/components/catalog-product-list';
@@ -12,7 +13,6 @@ import { ListEmptyPlaceholder } from '@/components/list-empty-placeholder';
 import { ListLoadMoreFooter } from '@/components/list-load-more-footer';
 import { PaginatedFlatList, paginatedListStyles } from '@/components/paginated-flat-list';
 import { RemoteImage } from '@/components/remote-image';
-import { ScreenHeader } from '@/components/screen-header';
 import { ThemedButton } from '@/components/themed-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -46,6 +46,8 @@ export default function HomeScreen() {
   const borderColor = useThemeColor({}, 'border');
   const surface = useThemeColor({}, 'surface');
   const muted = useThemeColor({}, 'muted');
+  const textColor = useThemeColor({}, 'text');
+  const primary = useThemeColor({}, 'primary');
 
   const productsErrorMessage = popularQuery.isError
     ? getApiErrorDetails(popularQuery.error, 'Could not load popular products.').message
@@ -70,11 +72,17 @@ export default function HomeScreen() {
   const listHeader = useMemo(
     () => (
       <View style={styles.headerBlock}>
-        <ScreenHeader title="Bazaar" showBack={false} />
+        <View style={styles.brandHeader}>
+          <BrandLogo withWordmark withCompany size={32} color={textColor} companyStyle={{ color: muted }} />
+        </View>
 
         <ThemedView style={[styles.bannerCard, { borderColor, backgroundColor: surface }]}>
-          <ThemedText type="defaultSemiBold">Smarter grocery shopping</ThemedText>
-          <ThemedText style={{ color: muted }}>Fast delivery, easy cart, and practical checkout.</ThemedText>
+          <ThemedText type="defaultSemiBold" style={{ color: primary }}>
+            {APP.tagline}
+          </ThemedText>
+          <ThemedText style={{ color: muted }}>
+            Fast delivery, easy cart, and practical checkout.
+          </ThemedText>
         </ThemedView>
 
         <View style={styles.sectionRow}>
@@ -134,8 +142,10 @@ export default function HomeScreen() {
       muted,
       openCategory,
       popularQuery.isFetching,
+      primary,
       refetchAll,
       surface,
+      textColor,
     ],
   );
 
@@ -182,6 +192,10 @@ const styles = StyleSheet.create({
   headerBlock: {
     gap: 12,
     marginBottom: 4,
+  },
+  brandHeader: {
+    paddingTop: 4,
+    paddingBottom: 2,
   },
   footerBlock: {
     gap: 12,

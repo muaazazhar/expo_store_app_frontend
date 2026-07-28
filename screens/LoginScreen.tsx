@@ -9,13 +9,14 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiErrorBanner } from "@/components/api-feedback";
+import { BrandLogo, APP } from "@/brand";
 import { NameFieldsRow } from "@/components/name-fields-row";
 import { ValidatingTextInput } from "@/components/validating-text-input";
-import { ScreenHeader } from "@/components/screen-header";
 import { ThemedButton } from "@/components/themed-button";
 import { FIELD_LIMITS, validateEmail, validatePassword, validatePersonName, validatePhone, validateRequired } from "@/constants/fieldLimits";
 import { getApiErrorDetails, logApiError } from "@/utils/apiError";
@@ -370,6 +371,7 @@ export default function LoginScreen() {
   };
 
   const backgroundColor = useThemeColor({}, "background");
+  const textColor = useThemeColor({}, "text");
   return (
     <SafeAreaView
       style={styles.safeArea}
@@ -390,15 +392,23 @@ export default function LoginScreen() {
         >
           <Pressable style={styles.page} onPress={Keyboard.dismiss} accessible={false}>
           <ThemedView style={[styles.container, { backgroundColor }]}>
-            <ScreenHeader
-              title={isRegisterMode ? "Create Account" : "Login"}
-              showBack={false}
-            />
-            <ThemedText style={[styles.helperText, { color: muted }]}>
-              {isRegisterMode
-                ? "Create your account to start ordering."
-                : "Sign in with your email or username."}
-            </ThemedText>
+            <View style={styles.brandBlock}>
+              <BrandLogo
+                withWordmark
+                withCompany
+                size={36}
+                color={textColor}
+                companyStyle={{ color: muted }}
+              />
+              <ThemedText style={[styles.helperText, { color: muted }]}>
+                {isRegisterMode
+                  ? `Join ${APP.name} to start ordering.`
+                  : `Sign in to your ${APP.name} account.`}
+              </ThemedText>
+              <ThemedText type="defaultSemiBold" style={styles.authModeTitle}>
+                {isRegisterMode ? "Create Account" : "Login"}
+              </ThemedText>
+            </View>
             {!isRegisterMode ? (
               <ValidatingTextInput
                 label="Email or Username"
@@ -597,9 +607,17 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
   },
+  brandBlock: {
+    gap: 10,
+    marginBottom: 4,
+  },
+  authModeTitle: {
+    marginTop: 4,
+    fontSize: 20,
+  },
   helperText: {
     // color set from theme token
-    marginTop: -4,
+    marginTop: -2,
   },
   googleButton: {
     borderWidth: 1,
