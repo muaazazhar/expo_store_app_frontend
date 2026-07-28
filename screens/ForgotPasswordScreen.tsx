@@ -1,14 +1,14 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { DismissKeyboardArea } from '@/components/keyboard-aware-scroll';
 
 import { ApiErrorBanner } from '@/components/api-feedback';
 import { ValidatingTextInput } from '@/components/validating-text-input';
@@ -85,7 +85,7 @@ export default function ForgotPasswordScreen() {
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           automaticallyAdjustKeyboardInsets
           showsVerticalScrollIndicator={false}>
-          <Pressable style={styles.scrollContent} onPress={Keyboard.dismiss} accessible={false}>
+          <DismissKeyboardArea style={styles.scrollContent}>
             <ThemedView style={[styles.container, { backgroundColor }]}>
               <ScreenHeader title="Forgot Password" />
               <ThemedText style={[styles.helperText, { color: muted }]}>
@@ -125,7 +125,7 @@ export default function ForgotPasswordScreen() {
                 onPress={() => router.replace('/login')}
               />
             </ThemedView>
-          </Pressable>
+          </DismissKeyboardArea>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

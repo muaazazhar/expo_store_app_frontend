@@ -3,7 +3,6 @@ import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
 import {
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -15,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiErrorBanner } from "@/components/api-feedback";
 import { BrandLogo, APP } from "@/brand";
+import { DismissKeyboardArea } from "@/components/keyboard-aware-scroll";
 import { NameFieldsRow } from "@/components/name-fields-row";
 import { ValidatingTextInput } from "@/components/validating-text-input";
 import { ThemedButton } from "@/components/themed-button";
@@ -390,7 +390,7 @@ export default function LoginScreen() {
           automaticallyAdjustKeyboardInsets
           showsVerticalScrollIndicator={false}
         >
-          <Pressable style={styles.page} onPress={Keyboard.dismiss} accessible={false}>
+          <DismissKeyboardArea style={styles.page}>
           <ThemedView style={[styles.container, { backgroundColor }]}>
             <View style={styles.brandBlock}>
               <BrandLogo
@@ -581,7 +581,7 @@ export default function LoginScreen() {
               </Pressable>
             ) : null}
           </ThemedView>
-          </Pressable>
+          </DismissKeyboardArea>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

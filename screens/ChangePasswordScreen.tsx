@@ -1,14 +1,14 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { DismissKeyboardArea } from '@/components/keyboard-aware-scroll';
 
 import { ApiErrorBanner } from '@/components/api-feedback';
 import { PasswordUpdateFields } from '@/components/password-update-fields';
@@ -133,7 +133,7 @@ export default function ChangePasswordScreen() {
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           automaticallyAdjustKeyboardInsets
           showsVerticalScrollIndicator={false}>
-          <Pressable style={styles.scrollContent} onPress={Keyboard.dismiss} accessible={false}>
+          <DismissKeyboardArea style={styles.scrollContent}>
             <ThemedView style={[styles.container, { backgroundColor }]}>
               <ScreenHeader title="Change Password" />
               <ThemedText style={[styles.helperText, { color: muted }]}>
@@ -178,7 +178,7 @@ export default function ChangePasswordScreen() {
                 onPress={handleSubmit}
               />
             </ThemedView>
-          </Pressable>
+          </DismissKeyboardArea>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

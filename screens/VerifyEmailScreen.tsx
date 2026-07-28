@@ -1,7 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -9,6 +8,8 @@ import {
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { DismissKeyboardArea } from '@/components/keyboard-aware-scroll';
 
 import { ApiErrorBanner } from '@/components/api-feedback';
 import { useNotification } from '@/context/NotificationContext';
@@ -162,7 +163,7 @@ export default function VerifyEmailScreen() {
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           automaticallyAdjustKeyboardInsets
           showsVerticalScrollIndicator={false}>
-          <Pressable style={styles.scrollContent} onPress={Keyboard.dismiss} accessible={false}>
+          <DismissKeyboardArea style={styles.scrollContent}>
           <ThemedView style={[styles.container, { backgroundColor }]}>
             <ScreenHeader title="Verify Email" showBack={false} />
             <ThemedText style={[styles.helperText, { color: muted }]}>
@@ -206,7 +207,7 @@ export default function VerifyEmailScreen() {
               <ThemedText type="link">Back to login</ThemedText>
             </Pressable>
           </ThemedView>
-          </Pressable>
+          </DismissKeyboardArea>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -6,10 +6,32 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  View,
   type ScrollViewProps,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+
+type DismissKeyboardAreaProps = {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+};
+
+/**
+ * Tap-outside dismisses the keyboard on native.
+ * On web, a Pressable wrapper steals TextInput focus (focus then immediate blur).
+ */
+export function DismissKeyboardArea({ children, style }: DismissKeyboardAreaProps) {
+  if (Platform.OS === 'web') {
+    return <View style={style}>{children}</View>;
+  }
+
+  return (
+    <Pressable style={style} onPress={Keyboard.dismiss} accessible={false}>
+      {children}
+    </Pressable>
+  );
+}
 
 type KeyboardAwareScrollProps = {
   children: ReactNode;
@@ -45,9 +67,13 @@ export function KeyboardAwareScroll({
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
         automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={scrollProps.showsVerticalScrollIndicator ?? false}>
-        <Pressable style={styles.tapToDismiss} onPress={dismissKeyboard} accessible={false}>
-          {children}
-        </Pressable>
+        {Platform.OS === 'web' ? (
+          <View style={styles.tapToDismiss}>{children}</View>
+        ) : (
+          <Pressable style={styles.tapToDismiss} onPress={dismissKeyboard} accessible={false}>
+            {children}
+          </Pressable>
+        )}
       </ScrollView>
       {footer}
     </KeyboardAvoidingView>
